@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import model.Rating;
 import model.Review;
+import java.util.random;
 
 // Implementasi interface ContentPage langsung di Movie
 public class movie extends Content implements ContentPage {
