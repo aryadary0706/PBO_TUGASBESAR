@@ -1,218 +1,386 @@
 <%-- 
     Document   : Main
-    Created on : May 24, 2025, 8:59:57 AM
+    Created on : May 24, 2025, 8:59:57 AM
     Author     : user
 --%>
 
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="model.Content" %>
+<%@ page import="model.movie" %>
+<%@ page import="model.Series" %>
+<%@ page import="java.util.List" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CINE MAGZ - Movie Streaming Platform</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/styles/styles.css">
-</head>
-<body>
-    <div class="container-fluid p-0">
-        <div class="row g-0">
-            <!-- Sidebar -->
-            <div class="col-auto sidebar">
-                <div class="d-flex flex-column vh-100">
-                    <!-- Logo -->
-                    <div class="p-3 border-bottom border-secondary">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-film text-warning me-2 fs-4"></i>
-                            <div>
-                                <h5 class="text-white mb-0">CINE</h5>
-                                <h5 class="text-white mb-0">MAGZ</h5>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Navigation -->
-                    <nav class="flex-grow-1 p-3">
-                        <ul class="nav flex-column">
-                            <li class="nav-item mb-2">
-                                <a class="nav-link text-white active" href="Main.jsp">
-                                    <i class="fas fa-home me-2"></i> For You
-                                </a>
-                            </li>
-                            <li class="nav-item mb-2">
-                                <a class="nav-link text-white-50" href="FavoritesList.jsp">
-                                    <i class="fas fa-heart me-2"></i> Favourites
-                                </a>
-                            </li>
-                            <li class="nav-item mb-2">
-                                <a class="nav-link text-white-50" href="WatchList.jsp">
-                                    <i class="fas fa-bookmark me-2"></i> Watchlist
-                                </a>
-                            </li>
-                            <li class="nav-item mb-2">
-                                <a class="nav-link text-white-50" href="History.jsp">
-                                    <i class="fas fa-history me-2"></i> History
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                    
-                    <!-- User Section -->
-                    <div class="p-3 border-top border-secondary">
-                        <div class="nav-item mb-2">
-                            <a class="nav-link text-white-50" href="#"> 
-<!--                                user.jsp-->
-                                <i class="fas fa-user me-2"></i> User
-                            </a>
-                        </div>
-                        <div class="nav-item">
-                            <a class="nav-link text-white-50" href="#">
-                                <!--logout-->
-                                <i class="fas fa-sign-out-alt me-2"></i> Logout
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
+<html>
+    <head>
+        <title>CineMagz - For You</title>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+        <style>
+            /* Common styles for all pages */
+            body {
+                margin: 0;
+                font-family: 'Inter', sans-serif;
+                background: linear-gradient(to right, #1e0a35, #431c69);
+                color: white;
+            }
+
+            .container {
+                display: flex;
+                min-height: 100vh;
+            }
+
+            /* Sidebar styles */
+            .sidebar {
+                width: 220px;
+                background-color: #141414;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                position: fixed;
+                height: 100vh;
+            }
+
+            .sidebar .logo {
+                margin-bottom: 40px;
+                text-align: center;
+            }
+
+            .sidebar .logo h1 {
+                font-size: 24px;
+                margin: 0;
+                line-height: 1.2;
+            }
+
+            .sidebar nav {
+                flex-grow: 1;
+            }
+
+            .sidebar a {
+                display: flex;
+                align-items: center;
+                color: #ffffff80;
+                text-decoration: none;
+                padding: 10px 0;
+                transition: color 0.3s;
+            }
+
+            .sidebar a:hover,
+            .sidebar a.active {
+                color: #fff;
+            }
+
+            .user-controls {
+                margin-top: auto;
+                border-top: 1px solid #ffffff20;
+                padding-top: 20px;
+            }
+
+            .logout-btn {
+                background: none;
+                border: none;
+                color: #ffffff80;
+                cursor: pointer;
+                font-size: 16px;
+                padding: 10px 0;
+                width: 100%;
+                text-align: left;
+                transition: color 0.3s;
+            }
+
+            .logout-btn:hover {
+                color: #fff;
+            }
+
+            /* Main content styles */
+            .main-content {
+                flex: 1;
+                margin-left: 220px;
+                padding: 30px;
+            }
+
+            /* Header styles */
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 30px;
+            }
+
+            .nav-tabs a {
+                color: #ffffff80;
+                text-decoration: none;
+                margin-right: 20px;
+                font-weight: 600;
+                transition: color 0.3s;
+            }
+
+            .nav-tabs a:hover,
+            .nav-tabs a.active {
+                color: #fff;
+            }
+
+            .search-bar {
+                display: flex;
+                align-items: center;
+                background: #ffffff10;
+                border-radius: 20px;
+                padding: 5px 15px;
+            }
+
+            .search-bar input {
+                background: none;
+                border: none;
+                color: #fff;
+                padding: 5px;
+                outline: none;
+            }
+
+            .search-bar button {
+                background: none;
+                border: none;
+                color: #ffffff80;
+                cursor: pointer;
+            }
+
+            /* Card styles */
+            .card-container {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
+            }
+
+            .card {
+                background: #ffffff10;
+                border-radius: 12px;
+                overflow: hidden;
+                position: relative;
+            }
+
+            .card img {
+                width: 100%;
+                height: 280px;
+                object-fit: cover;
+            }
+
+            .card-content {
+                padding: 15px;
+            }
+
+            .card-content h3 {
+                margin: 0;
+                font-size: 16px;
+                color: #fff;
+            }
+
+            .card-content p {
+                margin: 5px 0 0;
+                font-size: 14px;
+                color: #ffffff80;
+            }
+
+            .btn-heart {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: #ffffff20;
+                border: none;
+                color: #fff;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            .btn-heart:hover,
+            .btn-heart.active {
+                background: #ff4081;
+                transform: scale(1.1);
+            }
+
+            /* Recommendation section */
+            .recommendation {
+                position: relative;
+                border-radius: 20px;
+                overflow: hidden;
+                margin-bottom: 40px;
+                height: 400px;
+            }
+
+            .recommendation .banner-img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .recommendation .info {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                padding: 40px;
+                background: linear-gradient(transparent, #000000cc);
+            }
+
+            .recommendation h2 {
+                font-size: 36px;
+                margin: 10px 0;
+            }
+
+            .recommendation .actions {
+                display: flex;
+                gap: 10px;
+                margin-top: 20px;
+            }
+
+            .btn {
+                background: #ffffff20;
+                border: none;
+                color: #fff;
+                padding: 8px 20px;
+                border-radius: 20px;
+                cursor: pointer;
+                transition: background 0.3s;
+            }
+
+            .btn:hover {
+                background: #ffffff40;
+            }
+
+            .rating {
+                background: #ffcc00;
+                color: #000;
+                padding: 8px 20px;
+                border-radius: 20px;
+                font-weight: 600;
+            }
+
+            /* Empty state */
+            .empty-state {
+                text-align: center;
+                padding: 40px;
+                color: #ffffff80;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <!-- Include Sidebar -->
+            <c:set var="currentPage" value="forYou" scope="request"/>
+            <jsp:include page="sidebar.jsp"/>
+
             <!-- Main Content -->
-            <div class="col main-content">
-                <!-- Top Navigation -->
-                <nav class="navbar navbar-expand-lg navbar-dark bg-transparent px-4 py-3">
-                    <div class="container-fluid">
-                        <ul class="navbar-nav me-auto">
-                            <li class="nav-item">
-                                <a class="nav-link active fw-bold" href="#">Movies</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white-50" href="#">Series</a>
-                            </li>
-                        </ul>
-                        <div class="d-flex">
-                            <div class="input-group search-box">
-                                <input type="text" class="form-control bg-transparent border-0 text-white" 
-                                       placeholder="Search" aria-label="Search">
-                                <button class="btn btn-outline-secondary border-0" type="button">
-                                    <i class="fas fa-search"></i>
-                                </button>
+            <main class="main-content">
+                <!-- Header -->
+                <header class="header">
+                    <nav class="nav-tabs">
+                        <a href="${pageContext.request.contextPath}/RegisteredUserController?action=movies" 
+                           class="${param.contentType eq 'movies' ? 'active' : ''}">Movies</a>
+                        <a href="${pageContext.request.contextPath}/RegisteredUserController?action=series"
+                           class="${param.contentType eq 'series' ? 'active' : ''}">Series</a>
+                    </nav>
+                    <form action="${pageContext.request.contextPath}/RegisteredUserController" method="get" class="search-form">
+                        <input type="hidden" name="action" value="search">
+                        <div class="search-bar">
+                            <input type="text" name="query" placeholder="Search" value="${param.query}">
+                            <button type="submit">🔍</button>
+                        </div>
+                    </form>
+                </header>
+
+                <!-- Recommendation -->
+                <c:if test="${not empty recommended}">
+                    <section class="recommendation">
+                        <img src="${recommended.imageUrl}" alt="${recommended.title}" class="banner-img">
+                        <div class="info">
+                            <p>RECOMMEND FOR YOU</p>
+                            <h2>${recommended.title}</h2>
+                            <p>
+                                ${recommended['class'].simpleName} | 
+                                ${recommended.releaseDate} | 
+                                <c:choose>
+                                    <c:when test="${recommended['class'].simpleName eq 'movie'}">
+                                        ${recommended.duration}m
+                                    </c:when>
+                                    <c:otherwise>
+                                        ${recommended.totalEpisode} Episodes
+                                    </c:otherwise>
+                                </c:choose>
+                            </p>
+                            <div class="actions">
+                                <div class="rating">
+                                    Rating ${recommended.reviews.stream()
+                                        .mapToDouble(r -> r.rating.averageRate)
+                                        .average()
+                                        .orElse(0.0)}/10
+                                </div>
+                                <form action="${pageContext.request.contextPath}/RegisteredUserController" method="post" class="d-inline">
+                                    <input type="hidden" name="action" value="addToWatchlist">
+                                    <input type="hidden" name="contentId" value="${recommended.id}">
+                                    <button type="submit" class="btn">+ Watchlist</button>
+                                </form>
+                                <form action="${pageContext.request.contextPath}/RegisteredUserController" method="post" class="d-inline">
+                                    <input type="hidden" name="action" value="addToFavourites">
+                                    <input type="hidden" name="contentId" value="${recommended.id}">
+                                    <button type="submit" class="btn-heart">♡</button>
+                                </form>
                             </div>
                         </div>
-                    </div>
-                </nav>
-                
-                <!-- Hero Section -->
-                <div class="hero-section position-relative">
-                    <div class="hero-overlay"></div>
-                    <div class="hero-content position-absolute bottom-0 start-0 p-5">
-                        <p class="text-warning mb-2 fw-bold">RECOMMEND FOR YOU</p>
-                        <h1 class="display-3 fw-bold text-white mb-3">Breaking Bad</h1>
-                        <p class="text-white-50 mb-4">TV Series | 2008-2013 | TV-MA | 49m</p>
-                        
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="imdb-rating d-flex align-items-center bg-warning text-dark px-3 py-2 rounded">
-                                <strong>IMDb</strong>
-                                <span class="ms-2">9.5/10</span>
-                            </div>
-                            <button class="btn btn-dark px-4 py-2 rounded">
-                                <i class="fas fa-plus me-2"></i>Watchlist
-                            </button>
-                            <button class="btn btn-outline-light rounded-circle">
-                                <i class="fas fa-heart"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Top Rated Section -->
-                <div class="content-section p-5">
-                    <h3 class="text-white mb-4">Top Rated</h3>
-                    <div class="row g-4">
-                        <div class="col-md-3">
-                            <div class="movie-card position-relative">
-                                <img src="/placeholder.svg?height=300&width=250" class="card-img-top rounded" alt="Tokyo Train">
-                                <button class="btn btn-outline-light rounded-circle position-absolute top-0 end-0 m-2">
-                                    <i class="fas fa-heart"></i>
-                                </button>
-                                <div class="card-body p-3">
-                                    <h6 class="text-white fw-bold">Tokyo Train</h6>
-                                    <p class="text-white-50 small mb-0">2022 | Action comedy</p>
+                    </section>
+                </c:if>
+
+                <!-- Top Rated -->
+                <section class="top-rated">
+                    <h3>Top Rated</h3>
+                    <div class="card-grid">
+                        <c:forEach items="${topRated}" var="content">
+                            <div class="card">
+                                <a href="${pageContext.request.contextPath}/RegisteredUserController?action=viewContent&contentId=${content.id}">
+                                    <img src="${content.imageUrl}" alt="${content.title}">
+                                </a>
+                                <form action="${pageContext.request.contextPath}/RegisteredUserController" method="post">
+                                    <input type="hidden" name="action" value="addToFavourites">
+                                    <input type="hidden" name="contentId" value="${content.id}">
+                                    <button type="submit" class="btn-heart ${sessionScope.user.isFavorite(content) ? 'active' : ''}">
+                                        ♡
+                                    </button>
+                                </form>
+                                <div class="card-body">
+                                    <h6>${content.title}</h6>
+                                    <p>${content.releaseDate.year + 1900} | ${not empty content.genres ? content.genres[0] : ''}</p>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="movie-card position-relative">
-                                <img src="/placeholder.svg?height=300&width=250" class="card-img-top rounded" alt="Moonfall">
-                                <button class="btn btn-outline-light rounded-circle position-absolute top-0 end-0 m-2">
-                                    <i class="fas fa-heart"></i>
-                                </button>
-                                <div class="card-body p-3">
-                                    <h6 class="text-white fw-bold">Moonfall</h6>
-                                    <p class="text-white-50 small mb-0">2022 | Sci-fi</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="movie-card position-relative">
-                                <img src="/placeholder.svg?height=300&width=250" class="card-img-top rounded" alt="Life in Paris">
-                                <button class="btn btn-outline-light rounded-circle position-absolute top-0 end-0 m-2">
-                                    <i class="fas fa-heart"></i>
-                                </button>
-                                <div class="card-body p-3">
-                                    <h6 class="text-white fw-bold">Life in Paris</h6>
-                                    <p class="text-white-50 small mb-0">2023 | Documentary series</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="movie-card position-relative">
-                                <img src="/placeholder.svg?height=300&width=250" class="card-img-top rounded" alt="House of Gucci">
-                                <button class="btn btn-outline-light rounded-circle position-absolute top-0 end-0 m-2">
-                                    <i class="fas fa-heart"></i>
-                                </button>
-                                <div class="card-body p-3">
-                                    <h6 class="text-white fw-bold">House of Gucci</h6>
-                                    <p class="text-white-50 small mb-0">2021 | Drama</p>
-                                </div>
-                            </div>
-                        </div>
+                        </c:forEach>
                     </div>
-                </div>
-                
-                <!-- Most Viewed Section -->
-                <div class="content-section px-5 pb-5">
-                    <h3 class="text-white mb-4">Most Viewed</h3>
-                    <div class="row g-4">
-                        <div class="col-md-4">
-                            <div class="movie-card position-relative">
-                                <img src="/placeholder.svg?height=200&width=350" class="card-img-top rounded" alt="Movie 1">
-                                <button class="btn btn-outline-light rounded-circle position-absolute top-0 end-0 m-2">
-                                    <i class="fas fa-heart"></i>
-                                </button>
+                </section>
+
+                <!-- Most Viewed -->
+                <section class="most-viewed">
+                    <h3>Most Viewed</h3>
+                    <div class="card-grid">
+                        <c:forEach items="${mostViewed}" var="content">
+                            <div class="card">
+                                <a href="${pageContext.request.contextPath}/RegisteredUserController?action=viewContent&contentId=${content.id}">
+                                    <img src="${content.imageUrl}" alt="${content.title}">
+                                </a>
+                                <form action="${pageContext.request.contextPath}/RegisteredUserController" method="post">
+                                    <input type="hidden" name="action" value="addToFavourites">
+                                    <input type="hidden" name="contentId" value="${content.id}">
+                                    <button type="submit" class="btn-heart ${sessionScope.user.isFavorite(content) ? 'active' : ''}">
+                                        ♡
+                                    </button>
+                                </form>
+                                <div class="card-body">
+                                    <h6>${content.title}</h6>
+                                    <p>${content.releaseDate.year + 1900} | ${not empty content.genres ? content.genres[0] : ''}</p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="movie-card position-relative">
-                                <img src="/placeholder.svg?height=200&width=350" class="card-img-top rounded" alt="Movie 2">
-                                <button class="btn btn-outline-light rounded-circle position-absolute top-0 end-0 m-2">
-                                    <i class="fas fa-heart"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="movie-card position-relative">
-                                <img src="/placeholder.svg?height=200&width=350" class="card-img-top rounded" alt="Movie 3">
-                                <button class="btn btn-outline-light rounded-circle position-absolute top-0 end-0 m-2">
-                                    <i class="fas fa-heart"></i>
-                                </button>
-                            </div>
-                        </div>
+                        </c:forEach>
                     </div>
-                </div>
-            </div>
+                </section>
+            </main>
         </div>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    </body>
 </html>
+
