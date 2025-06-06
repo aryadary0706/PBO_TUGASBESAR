@@ -1,172 +1,248 @@
+🧩 1. DATABASE SCHEMA (`MySQL`)
 
-
-Struktur Database MySQL (`content.sql`)
-
-sql
-CREATE DATABASE IF NOT EXISTS content;
-USE content;
-
+```sql
 CREATE TABLE Series (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255),
-    genre VARCHAR(100),
-    sinopsis TEXT
+    description TEXT,
+    thumbnail_url VARCHAR(255)
 );
 
 CREATE TABLE Review (
     id INT AUTO_INCREMENT PRIMARY KEY,
     series_id INT,
-    reviewer VARCHAR(100),
-    rating INT CHECK (rating >= 1 AND rating <= 5),
-    review TEXT,
+    reviewer_name VARCHAR(255),
+    rating FLOAT,
+    comment TEXT,
     FOREIGN KEY (series_id) REFERENCES Series(id)
 );
+```
 
+---
 
-Kelas Java (`Series.java`)
+🧠 2. KELAS JAVA (Model) `Series.java`
 
-java
+```java
 public class Series {
     private int id;
     private String title;
-    private String genre;
-    private String sinopsis;
+    private String description;
+    private String thumbnailUrl;
+    private float averageRating;
 
-    public Series(int id, String title, String genre, String sinopsis) {
+    public Series(int id, String title, String description, String thumbnailUrl, float averageRating) {
         this.id = id;
         this.title = title;
-        this.genre = genre;
-        this.sinopsis = sinopsis;
+        this.description = description;
+        this.thumbnailUrl = thumbnailUrl;
+        this.averageRating = averageRating;
     }
 
     public String contentPage() {
-        return "seriesDetail.jsp?id=" + id;
+        return "seriesDetail.jsp?seriesId=" + id;
     }
 
-    // Getter dan setter
+    // Getter dan Setter
 }
+```
 
-mainContent.jsp – Halaman utama tampilkan semua series + rata-rata rating
+---
 
-jsp
-<%@ page import="java.sql.*" %>
-<%@ page contentType="text/html;charset=UTF-8" %>
+📄 3. `mainContent.jsp`
+
+```jsp
+<%@ page import="java.sql.*, java.util.*" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ include file="style.jsp" %>
+
 <html>
 <head>
-    <title>CINEMAGZ - Series</title>
-    <style>
-        body { font-family: 'Segoe UI'; background: #f8f8f8; margin: 40px; }
-        .card {
-            background: white; padding: 20px; margin-bottom: 20px;
-            border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .title { font-size: 24px; font-weight: bold; }
-        .genre { color: #888; margin-bottom: 10px; }
-        .sinopsis { margin-bottom: 10px; }
-        .rating { font-weight: bold; color: #f39c12; }
-        a { text-decoration: none; color: #3498db; }
-    </style>
+    <title>Cinemagz - Series</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Daftar Series di CINEMAGZ</h1>
-    <%
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/content", "root", "");
-        Statement stmt = conn.createStatement();
-        String query = "SELECT s.*, COALESCE(AVG(r.rating), 0) as avg_rating FROM Series s LEFT JOIN Review r ON s.id = r.series_id GROUP BY s.id";
-        ResultSet rs = stmt.executeQuery(query);
-        while(rs.next()) {
-    %>
-    <div class="card">
-        <div class="title"><%= rs.getString("title") %></div>
-        <div class="genre">Genre: <%= rs.getString("genre") %></div>
-        <div class="sinopsis"><%= rs.getString("sinopsis") %></div>
-        <div class="rating">Rata-rata Rating: <%= String.format("%.2f", rs.getDouble("avg_rating")) %></div>
-        <a href="seriesDetail.jsp?id=<%= rs.getInt("id") %>">Lihat Detail & Tambah Review</a>
+<h1 class="page-title">Daftar Series</h1>
+<div class="series-container">
+
+<%
+    Class.forName("com.mysql.jdbc.Driver");
+    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/cinemagz", "root", "");
+
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("SELECT s.*, IFNULL(AVG(r.rating), 0) as avg_rating " +
+                                     "FROM Series s LEFT JOIN Review r ON s.id = r.series_id " +
+                                     "GROUP BY s.id");
+
+    while (rs.next()) {
+%>
+    <div class="series-card">
+        <img src="<%= rs.getString("thumbnail_url") %>" class="series-image"/>
+        <div class="series-info">
+            <h3><%= rs.getString("title") %></h3>
+            <p>Rating: <%= String.format("%.1f", rs.getFloat("avg_rating")) %>/5</p>
+            <a href="seriesDetail.jsp?seriesId=<%= rs.getInt("id") %>">Lihat Detail</a>
+        </div>
     </div>
-    <%
-        }
-        conn.close();
-    %>
+<%
+    }
+    rs.close();
+    stmt.close();
+    conn.close();
+%>
+
+</div>
 </body>
 </html>
+```
 
+---
 
-seriesDetail.jsp – Detail series + tambah review
+📄 4. `seriesDetail.jsp`
 
-jsp
+```jsp
 <%@ page import="java.sql.*" %>
-<%@ page contentType="text/html;charset=UTF-8" %>
 <%
-    int id = Integer.parseInt(request.getParameter("id"));
-    Class.forName("com.mysql.cj.jdbc.Driver");
-    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/content", "root", "");
+    int seriesId = Integer.parseInt(request.getParameter("seriesId"));
+
+    Class.forName("com.mysql.jdbc.Driver");
+    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/cinemagz", "root", "");
 
     PreparedStatement ps = conn.prepareStatement("SELECT * FROM Series WHERE id = ?");
-    ps.setInt(1, id);
+    ps.setInt(1, seriesId);
     ResultSet rs = ps.executeQuery();
     rs.next();
 %>
+
 <html>
 <head>
-    <title><%= rs.getString("title") %> - CINEMAGZ</title>
+    <title><%= rs.getString("title") %></title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1><%= rs.getString("title") %></h1>
-    <p><strong>Genre:</strong> <%= rs.getString("genre") %></p>
-    <p><strong>Sinopsis:</strong> <%= rs.getString("sinopsis") %></p>
+    <div class="series-detail">
+        <h1><%= rs.getString("title") %></h1>
+        <img src="<%= rs.getString("thumbnail_url") %>" class="detail-image"/>
+        <p><%= rs.getString("description") %></p>
+    </div>
 
-    <h2>Review</h2>
-    <%
-        PreparedStatement revStmt = conn.prepareStatement("SELECT * FROM Review WHERE series_id = ?");
-        revStmt.setInt(1, id);
-        ResultSet revs = revStmt.executeQuery();
-        while(revs.next()) {
-    %>
-        <p><strong><%= revs.getString("reviewer") %></strong> beri rating <%= revs.getInt("rating") %>/5</p>
-        <p><%= revs.getString("review") %></p>
-        <hr/>
-    <%
-        }
-    %>
+    <h2>Reviews</h2>
+<%
+    PreparedStatement psReview = conn.prepareStatement("SELECT * FROM Review WHERE series_id = ?");
+    psReview.setInt(1, seriesId);
+    ResultSet reviews = psReview.executeQuery();
+    while (reviews.next()) {
+%>
+    <div class="review">
+        <strong><%= reviews.getString("reviewer_name") %></strong> - <%= reviews.getFloat("rating") %>/5<br>
+        <em><%= reviews.getString("comment") %></em>
+    </div>
+<% } %>
 
     <h3>Tambah Review</h3>
-    <form method="post" action="addReview.jsp">
-        <input type="hidden" name="series_id" value="<%= id %>"/>
-        Nama: <input type="text" name="reviewer" required/><br/>
-        Rating: <input type="number" name="rating" min="1" max="5" required/><br/>
-        Review: <textarea name="review" required></textarea><br/>
-        <button type="submit">Submit</button>
+    <form action="addReview.jsp" method="post">
+        <input type="hidden" name="seriesId" value="<%= seriesId %>"/>
+        <input type="text" name="reviewer" placeholder="Nama" required/><br>
+        <input type="number" name="rating" step="0.1" min="0" max="5" placeholder="Rating" required/><br>
+        <textarea name="comment" placeholder="Komentar..." required></textarea><br>
+        <input type="submit" value="Kirim Review"/>
     </form>
+
+<%
+    rs.close();
+    ps.close();
+    psReview.close();
+    conn.close();
+%>
 </body>
 </html>
-<%
-    conn.close();
-%>
+```
 
-addReview.jsp
+---
 
-jsp
+📄 5. `addReview.jsp`
+
+```jsp
 <%@ page import="java.sql.*" %>
 <%
-    int seriesId = Integer.parseInt(request.getParameter("series_id"));
+    int seriesId = Integer.parseInt(request.getParameter("seriesId"));
     String reviewer = request.getParameter("reviewer");
-    int rating = Integer.parseInt(request.getParameter("rating"));
-    String review = request.getParameter("review");
+    float rating = Float.parseFloat(request.getParameter("rating"));
+    String comment = request.getParameter("comment");
 
-    Class.forName("com.mysql.cj.jdbc.Driver");
-    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/content", "root", "");
+    Class.forName("com.mysql.jdbc.Driver");
+    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/cinemagz", "root", "");
 
-    PreparedStatement ps = conn.prepareStatement("INSERT INTO Review (series_id, reviewer, rating, review) VALUES (?, ?, ?, ?)");
+    PreparedStatement ps = conn.prepareStatement("INSERT INTO Review(series_id, reviewer_name, rating, comment) VALUES (?, ?, ?, ?)");
     ps.setInt(1, seriesId);
     ps.setString(2, reviewer);
-    ps.setInt(3, rating);
-    ps.setString(4, review);
+    ps.setFloat(3, rating);
+    ps.setString(4, comment);
     ps.executeUpdate();
 
+    ps.close();
     conn.close();
 
-    response.sendRedirect("seriesDetail.jsp?id=" + seriesId);
+    response.sendRedirect("seriesDetail.jsp?seriesId=" + seriesId);
 %>
+```
 
+---
 
+🎨 6. `style.css`
+
+```css
+body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f2f2f2;
+}
+
+.page-title {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+}
+
+.series-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.series-card {
+    background-color: #fff;
+    width: 300px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.series-card:hover {
+    transform: scale(1.05);
+}
+
+.series-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.series-info {
+    padding: 15px;
+}
+
+.series-detail img.detail-image {
+    width: 100%;
+    max-width: 600px;
+    border-radius: 8px;
+}
+
+.review {
+    background-color: #fff;
+    margin: 10px 0;
+    padding: 10px;
+    border-left: 4px solid #888;
+}
